@@ -1,0 +1,85 @@
+import unittest
+
+import numpy as np
+from src.main import gaussian_elimination
+
+
+class TestGaussianElimination(unittest.TestCase):
+
+    def test_has_solution_3x4(self):
+        matrix = np.array([
+            [  9, -3,  1,  21],
+            [ 25,  5,  1,  61],
+            [  1,  1,  1,   9],
+        ])
+        self.assertEqual(
+            gaussian_elimination(matrix), 
+            (('2.0', '1.0', '6.0'), True, False)
+        )
+
+    def test_has_solution_3x4_zero_first(self):
+        matrix = np.array([
+            [  0,  1,  1,  3],
+            [  1,  2,  0,  7],
+            [  2,  0, -1,  8],
+        ])
+        self.assertEqual(
+            gaussian_elimination(matrix), 
+            (('5.0', '1.0', '2.0'), True, False)
+        )
+
+    def test_has_solution_4x5(self):
+        matrix = np.array([
+            [  1,  1,  1,  1, -2 ],
+            [ -1,  1, -1,  1, -10],
+            [  0, -2,  0,  1,  0 ],
+            [  3,  2,  1,  2, -2 ],
+        ])
+        self.assertEqual(
+            gaussian_elimination(matrix), 
+            (('3.0', '-2.0', '1.0', '-4.0'), True, False)
+        )
+
+    def test_has_no_solution_3x4(self):
+        matrix = np.array([
+            [  4,  3, -2, -5],
+            [  4,  1, -1, -8],
+            [  8,  8, -5, -6],
+        ])
+        self.assertEqual(
+            gaussian_elimination(matrix), 
+            ((), False, False)
+        )
+
+    def test_has_unlimited_solutions_3x4(self):
+        matrix = np.array([
+            [  2, -2,  3,  0],
+            [  1, -2,  4, -6],
+            [  3, -4,  7, -6],
+        ])
+        self.assertEqual(
+            gaussian_elimination(matrix), 
+            (('1.0*t + 6.0', '2.5*t + 6.0', 't'), True, True)
+        )
+
+    def test_error_wrong_shape(self):
+        matrix = np.array([
+            [  3,  2, -1],
+            [  4,  1, -2],
+            [  6,  3,  3],
+        ])
+        with self.assertRaises(ValueError):
+            gaussian_elimination(matrix)
+
+    def test_error_first_col_zeros(self):
+        matrix = np.array([
+            [  0, -3,  1,  21],
+            [  0,  5,  1,  61],
+            [  0,  1,  1,   9],
+        ])
+        with self.assertRaises(ValueError):
+            gaussian_elimination(matrix)
+
+
+if __name__ == '__main__':
+    unittest.main()
