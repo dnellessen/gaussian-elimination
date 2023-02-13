@@ -16,7 +16,7 @@ $$ \left(\begin{matrix}
 \end{matrix}\right) $$
 
 $$
-L = {\\{( 3.0; -2.0; 1.0; -4.0 )}\\}
+L = {\\{( 3; -2; 1; -4 )}\\}
 $$
 
 (2)
@@ -40,7 +40,7 @@ $$ \left(\begin{matrix}
 \end{matrix}\right) $$
 
 $$
-L = {\\{( 2.0 - 1.0t; 2.0t + 2.0; t ) | t\in\mathbb{R}}\\}
+L = {\\{( 2 - t; 2t + 2; t ) | t\in\mathbb{R}}\\}
 $$
 
 ## Getting Started
@@ -94,3 +94,5 @@ $ python3 src/main.py
 
 L = {( 2.0; -3.0; 1.0 )}
 ```
+
+If you use the argument `-f` the solution set will be computed using fractions.

@@ -13,8 +13,12 @@ class TestGaussianElimination(unittest.TestCase):
             [  1,  1,  1,   9],
         ])
         self.assertEqual(
-            gaussian_elimination(matrix), 
+            gaussian_elimination(matrix),
             (('2.0', '1.0', '6.0'), True, False)
+        )
+        self.assertEqual(
+            gaussian_elimination(matrix, frac=True),
+            (('2', '1', '6'), True, False)
         )
 
     def test_has_solution_3x4_zero_first(self):
@@ -27,6 +31,10 @@ class TestGaussianElimination(unittest.TestCase):
             gaussian_elimination(matrix), 
             (('5.0', '1.0', '2.0'), True, False)
         )
+        self.assertEqual(
+            gaussian_elimination(matrix, frac=True),
+            (('5', '1', '2'), True, False)
+        )
 
     def test_has_solution_4x5(self):
         matrix = np.array([
@@ -38,6 +46,10 @@ class TestGaussianElimination(unittest.TestCase):
         self.assertEqual(
             gaussian_elimination(matrix), 
             (('3.0', '-2.0', '1.0', '-4.0'), True, False)
+        )
+        self.assertEqual(
+            gaussian_elimination(matrix, frac=True),
+            (('3', '-2', '1', '-4'), True, False)
         )
 
     def test_has_no_solution_3x4(self):
@@ -60,6 +72,10 @@ class TestGaussianElimination(unittest.TestCase):
         self.assertEqual(
             gaussian_elimination(matrix), 
             (('1.0*t + 6.0', '2.5*t + 6.0', 't'), True, True)
+        )
+        self.assertEqual(
+            gaussian_elimination(matrix, frac=True),
+            (('1*t + 6', '(5/2)*t + 6', 't'), True, True)
         )
 
     def test_error_wrong_shape(self):

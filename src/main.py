@@ -1,6 +1,10 @@
 import numpy as np
 from sympy import simplify
 
+from fractions import Fraction
+import re
+import sys
+
 if __name__ == '__main__':
     from matrix import *
     from printformat import printf
@@ -9,13 +13,47 @@ else:
     from .printformat import printf
 
 
-def format_unlimited(matrix: np.ndarray) -> tuple[str]:
+def convert_to_fraction(L: tuple):
+    '''
+    Converts floats to fractions in solution set.
+
+    Parameters
+    ----------
+    L: tuple
+
+    Returns
+    ----------
+    L_as_frac: tuple
+    '''
+
+    L_as_frac = []
+
+    for i, sol in enumerate(L):
+        sol_as_frac = sol
+
+        floats = re.findall(r"[-+]?(?:\d*\.*\d+)", sol)
+        for as_float in floats:
+            as_fraction = str(Fraction(as_float))
+
+            if float(eval(as_fraction)).is_integer():
+                sol_as_frac = sol_as_frac.replace(as_float, as_fraction)
+            else:
+                sol_as_frac = sol_as_frac.replace(as_float, f'({as_fraction})')
+
+        L_as_frac.append(sol_as_frac)
+
+    return tuple(L_as_frac)
+
+
+def format_unlimited(matrix: np.ndarray, frac: bool = False) -> tuple[str]:
     '''
     Returns solution set of given matrix for unlimited solutions (Last row empty).
 
     Parameter
     ----------
     matrix: np.ndarray
+    frac: bool (Default: False)
+        Solution set with franctions instead of decimals
 
     Returns
     -------
@@ -45,10 +83,11 @@ def format_unlimited(matrix: np.ndarray) -> tuple[str]:
 
         col -= 1
 
-    return tuple(L)
+    L = tuple(L) if not frac else convert_to_fraction(tuple(L))
+    return L
 
 
-def gaussian_elimination(matrix: np.ndarray) -> tuple[tuple[str], bool, bool]:
+def gaussian_elimination(matrix: np.ndarray, frac: bool = False) -> tuple[tuple[str], bool, bool]:
     '''
     Solves the linear system of equations using the Gaussian elimination.
 
@@ -60,6 +99,8 @@ def gaussian_elimination(matrix: np.ndarray) -> tuple[tuple[str], bool, bool]:
     Parameter
     ----------
     matrix: np.ndarray
+    frac: bool (Default: False)
+        Solution set with franctions instead of decimals
 
     Returns
     ----------
@@ -84,6 +125,8 @@ def gaussian_elimination(matrix: np.ndarray) -> tuple[tuple[str], bool, bool]:
     >>> 
     >>> gaussian_elimination(matrix)
     ('2.0', '1.0', '6.0'), True, False
+    >>> gaussian_elimination(matrix, frac=True)
+    ('2', '1', '6'), True, False
     >>> 
     >>> 
     >>> matrix = np.array([
@@ -95,6 +138,8 @@ def gaussian_elimination(matrix: np.ndarray) -> tuple[tuple[str], bool, bool]:
     >>> 
     >>> gaussian_elimination(matrix)
     ('3.0', '-2.0', '1.0', '-4.0'), True, False
+    >>> gaussian_elimination(matrix, frac=True)
+    ('3', '-2', '1', '-4'), True, False
     >>> 
     >>> 
     >>> matrix = np.array([
@@ -115,6 +160,8 @@ def gaussian_elimination(matrix: np.ndarray) -> tuple[tuple[str], bool, bool]:
     >>> 
     >>> gaussian_elimination(matrix)
     ('1.0*t + 6.0', '2.5*t + 6.0', 't'), True, True
+    >>> gaussian_elimination(matrix, frac=True)
+    ('1*t + 6', '(5/2)*t + 6', 't'), True, True
     >>> 
     >>> 
     >>> martix = np.array([
@@ -189,7 +236,7 @@ def gaussian_elimination(matrix: np.ndarray) -> tuple[tuple[str], bool, bool]:
             # unlimited solutions
             else:
                 has_solution, is_unlimited = True, True
-                return format_unlimited(matrix), has_solution, is_unlimited
+                return format_unlimited(matrix, frac), has_solution, is_unlimited
 
     ## get solution set ##
     L = np.ones(matrix_cols-1)     # solution set filled with ones
@@ -209,7 +256,8 @@ def gaussian_elimination(matrix: np.ndarray) -> tuple[tuple[str], bool, bool]:
         matrix[i, -1] = L[i]
 
     has_solution, is_unlimited = True, False
-    return tuple(L.astype(str)), has_solution, is_unlimited
+    L = tuple(L.astype(str)) if not frac else convert_to_fraction(L.astype(str))
+    return L, has_solution, is_unlimited
 
 
 if __name__ == "__main__":
@@ -220,5 +268,6 @@ if __name__ == "__main__":
         matrix.append([eval(i) for i in n.split(' ')])
 
     matrix = np.array(matrix)
+    frac = '-f' in sys.argv
 
-    printf(*gaussian_elimination(matrix))
+    printf(*gaussian_elimination(matrix, frac))
