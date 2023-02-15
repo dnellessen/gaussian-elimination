@@ -339,6 +339,8 @@ def gaussian_elimination(matrix: np.ndarray, frac: bool = False) -> tuple[tuple[
 
 
 if __name__ == "__main__":
+    print("Enter matrix:")
+
     matrix = []
     while True:
         n = input()

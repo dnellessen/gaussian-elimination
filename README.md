@@ -88,6 +88,7 @@ Now you can enter each row, seperating the values with a space.\
 When done, enter a new line and the system will be solved.
 ```
 $ python3 src/main.py
+Enter matrix:
 6 2 -1 5
 3 -4 -2 16
 2 -1 -2 5
