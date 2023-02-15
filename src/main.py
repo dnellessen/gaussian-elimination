@@ -19,11 +19,11 @@ def convert_to_fraction(L: tuple):
 
     Parameters
     ----------
-    L: tuple
+    L: tuple[str]
 
     Returns
     ----------
-    L_as_frac: tuple
+    L_as_frac: tuple[str]
     '''
 
     L_as_frac = []
@@ -31,11 +31,11 @@ def convert_to_fraction(L: tuple):
     for i, sol in enumerate(L):
         sol_as_frac = sol
 
-        floats = re.findall(r"[-+]?(?:\d*\.*\d+)", sol)
+        floats = re.findall(r"[-+]?(?:\d*\.*\d+)", sol)     # isolate floats (useful with unlimited solution)
         for as_float in floats:
-            as_fraction = str(Fraction(as_float))
+            as_fraction = str(Fraction(as_float).limit_denominator(1000))
 
-            if float(eval(as_fraction)).is_integer():
+            if float(eval(as_fraction)).is_integer():   # ignore .0
                 sol_as_frac = sol_as_frac.replace(as_float, as_fraction)
             else:
                 sol_as_frac = sol_as_frac.replace(as_float, f'({as_fraction})')
@@ -57,7 +57,7 @@ def format_unlimited(matrix: np.ndarray, frac: bool = False) -> tuple[str]:
 
     Returns
     -------
-    L: tuple
+    L: tuple[str]
         Solution set
     '''
 
@@ -87,14 +87,37 @@ def format_unlimited(matrix: np.ndarray, frac: bool = False) -> tuple[str]:
     return L
 
 
+def test_rest_equations(L: tuple[str], rest_equations: np.ndarray) -> bool:
+    '''
+    Checks if the rest equations are result to true expressions
+    when plugginf the solution set in.
+
+    Parameter
+    ----------
+    L: tuple[str]
+    rest_equations: np.ndarray
+
+    Returns
+    -------
+    success: bool
+    '''
+
+    t = 1   # for unlimited solutions
+
+    for eq in rest_equations:
+        res = 0
+        for i in range(len(L)):
+            res += eval(f"({L[i]})*({eq[i]})")
+        if round(res, 10) != eq[-1]:
+            return False
+
+    return True
+
+
 def gaussian_elimination(matrix: np.ndarray, frac: bool = False) -> tuple[tuple[str], bool, bool]:
     '''
-    Solves the linear system of equations using the Gaussian elimination.
-
-    Matrix must follow shape pattern: (i, i+1)
-
-    Equations must follow pattern:
-    ax + by + cz + ... = n
+    Solves a linear system of equations using the Gaussian elimination.
+    Returns a solution set for one, no, or unlimited solutions.
 
     Parameter
     ----------
@@ -112,8 +135,7 @@ def gaussian_elimination(matrix: np.ndarray, frac: bool = False) -> tuple[tuple[
     Raises
     ------
     ValueError
-        If the matrix does not follow shape pattern or
-        its first column is filled with zeros.
+        If first column is filled with zeros.
 
     Examples
     -------
@@ -164,14 +186,39 @@ def gaussian_elimination(matrix: np.ndarray, frac: bool = False) -> tuple[tuple[
     ('1*t + 6', '(5/2)*t + 6', 't'), True, True
     >>> 
     >>> 
-    >>> martix = np.array([
-    ...    [  3,  2, -1],
-    ...    [  4,  1, -2],
-    ...    [  6,  3,  3],
+    >>> matrix = np.array([
+    ...    [ 1, 1, 1, 3],
+    ...    [ 1, 2, 3, 6],
     ... ])
     >>> 
     >>> gaussian_elimination(matrix)
-    ValueError: matrix must follow shape pattern: (i, i+1)
+    ('1.0*t', '3.0 - 2.0*t', 't'), True, True
+    >>> gaussian_elimination(matrix, frac=True)
+    ('1*t', '3 - 2*t', 't'), True, True
+    >>> 
+    >>> 
+    >>> matrix = np.array([
+    ...    [  1,  1,  1, 15],
+    ...    [  2, -1,  7, 50],
+    ...    [  3, 11, -9,  1],
+    ...    [  1, -1,  1,  5],
+    ... ])
+    >>> 
+    >>> gaussian_elimination(matrix)
+    ('3.0', '5.0', '7.0'), True, False
+    >>> gaussian_elimination(matrix, frac=True)
+    ('3', '5', '7'), True, False
+    >>> 
+    >>> 
+    >>> matrix = np.array([
+    ...    [  1,  0,  1,  2],
+    ...    [  0,  1,  1,  4],
+    ...    [  1,  1,  0,  5],
+    ...    [  1,  1,  1,  0],
+    ... ])
+    >>> 
+    >>> gaussian_elimination(matrix)
+    (), False, False
     >>> 
     >>> 
     >>> martix = np.array([
@@ -187,10 +234,28 @@ def gaussian_elimination(matrix: np.ndarray, frac: bool = False) -> tuple[tuple[
 
     matrix = matrix.astype(np.float64)
     matrix_rows, matrix_cols = matrix.shape
-    
-    ## check matrix shape ##
-    if matrix_cols != matrix_rows + 1:
-        raise ValueError("matrix must follow shape pattern: (i, i+1)")
+
+    rest_equations = []
+
+    ## check matrix shape and expand if necessary ##
+    num_vabiables = matrix_cols - 1
+    if num_vabiables > matrix_rows:     # more variables than equations
+        diff = num_vabiables - matrix_rows
+        for _ in range(diff):
+            matrix = np.vstack([matrix, np.zeros(matrix_cols)])
+    elif num_vabiables < matrix_rows:   # less variables than equations
+        diff = matrix_rows - num_vabiables
+        for _ in range(diff):
+            rest_equations.append(matrix[-1])
+            matrix = matrix[:-1]
+
+    rest_equations = np.array(rest_equations)
+    matrix_rows, matrix_cols = matrix.shape
+
+    ## check matrix shape and expand if necessary ##
+    while matrix_cols != matrix_rows + 1:
+        matrix = np.vstack([matrix, np.zeros(matrix_cols)])
+        matrix_rows, matrix_cols = matrix.shape
 
     ## switch rows since the first element cannot be 0 ##
     i = 1
@@ -236,7 +301,14 @@ def gaussian_elimination(matrix: np.ndarray, frac: bool = False) -> tuple[tuple[
             # unlimited solutions
             else:
                 has_solution, is_unlimited = True, True
-                return format_unlimited(matrix, frac), has_solution, is_unlimited
+                L = format_unlimited(matrix, frac)
+
+                if rest_equations.any():
+                    if not test_rest_equations(L, rest_equations):
+                        has_solution, is_unlimited = False, False
+                        return (), has_solution, is_unlimited
+
+                return L, has_solution, is_unlimited
 
     ## get solution set ##
     L = np.ones(matrix_cols-1)     # solution set filled with ones
@@ -257,6 +329,12 @@ def gaussian_elimination(matrix: np.ndarray, frac: bool = False) -> tuple[tuple[
 
     has_solution, is_unlimited = True, False
     L = tuple(L.astype(str)) if not frac else convert_to_fraction(L.astype(str))
+
+    if rest_equations.any():
+        if not test_rest_equations(L, rest_equations):
+            has_solution, is_unlimited = False, False
+            return (), has_solution, is_unlimited
+
     return L, has_solution, is_unlimited
 
 

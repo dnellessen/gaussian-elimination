@@ -2,7 +2,7 @@
 
 # Gaussian Elimination
 
-Perform the Gaussian elimination for any n x n+1 matrix and get a solution set for one, no, or unlimited solutions.
+Perform the Gaussian elimination for any matrix and get a solution set for one, no, or unlimited solutions.
 
 
 ## Exapmles
